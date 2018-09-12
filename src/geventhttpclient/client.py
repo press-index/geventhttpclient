@@ -123,9 +123,6 @@ class HTTPClient(object):
     def close(self):
         self._connection_pool.close()
 
-    def __del__(self):
-        self.close()
-
     # Like urllib2, try to treat the body as a file if we can't determine the
     # file length with `len()`
     def _get_body_length(self, body):

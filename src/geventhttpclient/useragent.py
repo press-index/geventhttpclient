@@ -16,7 +16,7 @@ except ImportError:
     class DNSError(Exception): pass
 
 from .url import URL
-from .client import HTTPClient
+from .client import HTTPClient, HTTPClientPool
 
 
 class ConnectionError(Exception):
@@ -261,7 +261,13 @@ class UserAgent(object):
         if headers:
             self.default_headers.update(headers)
         self.cookiejar = cookiejar
-        self.__client_options = kwargs
+        self.clientpool = HTTPClientPool(**kwargs)
+
+    def close(self):
+        self.clientpool.close()
+
+    def __del__(self):
+        self.close()
 
     def _make_request(self, url, method='GET', headers=None, payload=None):
         req_headers = self.default_headers.copy()
@@ -284,7 +290,7 @@ class UserAgent(object):
         return self.request_type(url, method=method, headers=req_headers, payload=payload)
 
     def _urlopen(self, request):
-        client = HTTPClient.from_url(request.url_split, **self.__client_options)
+        client = self.clientpool.get_client(request.url_split)
         resp = client.request(request.method, request.url_split.request_uri,
                               body=request.payload, headers=request.headers)
         return self.response_type(resp, request=request, sent_request=resp._sent_request)
@@ -393,10 +399,10 @@ class UserAgent(object):
                         else:
                             return ret
             else:
-                e = RetriesExceeded(req.url, "Redirection limit reached (%s)" % self.max_redirects)
+                e = RetriesExceeded(url, "Redirection limit reached (%s)" % self.max_redirects)
                 last_error = self._handle_error(e, url=url)
         else:
-            return self._handle_retries_exceeded(req.url, last_error=last_error)
+            return self._handle_retries_exceeded(url, last_error=last_error)
 
     @classmethod
     def _conversation_str(cls, url, resp, payload=None):
