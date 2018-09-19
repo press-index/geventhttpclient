@@ -38,6 +38,14 @@ DEFAULT_NETWORK_TIMEOUT = 5.0
 IGNORED = object()
 
 
+class ProxyError(Exception):
+    def __init__(self, *args, body=None, status_code=None, proxy=None):
+        super().__init__(*args)
+        self.proxy = proxy
+        self.status_code = status_code
+        self.body = body
+
+
 class ConnectionPool(object):
     DEFAULT_CONNECTION_TIMEOUT = 5.0
     DEFAULT_NETWORK_TIMEOUT = 5.0
@@ -64,6 +72,8 @@ class ConnectionPool(object):
         self.network_timeout = network_timeout
         self.size = size
         self.disable_ipv6 = disable_ipv6
+
+        self.__proxy = '{self._connection_host}{self._connection_port}'.format(self=self)
 
     def _resolve(self):
         """ resolve (dns) socket informations needed to connect it.
@@ -148,10 +158,26 @@ class ConnectionPool(object):
             )
 
             resp = sock.recv(4096)
+
+            if not resp:
+                raise ProxyError(
+                    'Could not connect to proxy: '
+                    '{self.__proxy}'.format(self=self))
+
             parts = resp.split()
-            if not parts or parts[1] != b"200":
-                raise RuntimeError(
-                    "Error response from Proxy server : %s" % resp)
+            code = parts[1]
+            if code != b"200":
+                try:
+                    raise ProxyError(
+                        'Error response from proxy server',
+                        status_code=int(code),
+                        body=resp,
+                        proxy=self.__proxy,
+                    )
+                except ValueError:
+                    raise ProxyError('Invalid response from proxy server',
+                                     body=resp,
+                                     proxy=self.__proxy)
 
     def get_socket(self):
         """ get a socket from the pool. This blocks until one is available.
