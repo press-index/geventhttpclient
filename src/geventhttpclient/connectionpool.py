@@ -165,19 +165,19 @@ class ConnectionPool(object):
                     '{self.__proxy}'.format(self=self))
 
             parts = resp.split()
-            code = parts[1]
-            if code != b"200":
-                try:
+            try:
+                code = parts[1]
+                if code != b"200":
                     raise ProxyError(
                         'Error response from proxy server',
                         status_code=int(code),
                         body=resp,
                         proxy=self.__proxy,
                     )
-                except ValueError:
-                    raise ProxyError('Invalid response from proxy server',
-                                     body=resp,
-                                     proxy=self.__proxy)
+            except (IndexError, ValueError):
+                raise ProxyError('Invalid response from proxy server',
+                                 body=resp,
+                                 proxy=self.__proxy)
 
     def get_socket(self):
         """ get a socket from the pool. This blocks until one is available.
