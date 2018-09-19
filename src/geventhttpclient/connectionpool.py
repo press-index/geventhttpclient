@@ -45,6 +45,10 @@ class ProxyError(Exception):
         self.status_code = status_code
         self.body = body
 
+    def __str__(self):
+        return '{}, proxy: {}. status code: {}'.format(
+            self.args[0], self.proxy, self.status_code)
+
 
 class ConnectionPool(object):
     DEFAULT_CONNECTION_TIMEOUT = 5.0
@@ -68,12 +72,14 @@ class ConnectionPool(object):
         self._socket_queue = gevent.queue.LifoQueue(size)
         self._use_proxy = use_proxy
 
+        if use_proxy:
+            self.__proxy = '{self._connection_host}:{self._connection_port}'\
+                .format(self=self)
+
         self.connection_timeout = connection_timeout
         self.network_timeout = network_timeout
         self.size = size
         self.disable_ipv6 = disable_ipv6
-
-        self.__proxy = '{self._connection_host}{self._connection_port}'.format(self=self)
 
     def _resolve(self):
         """ resolve (dns) socket informations needed to connect it.
@@ -161,8 +167,7 @@ class ConnectionPool(object):
 
             if not resp:
                 raise ProxyError(
-                    'Could not connect to proxy: '
-                    '{self.__proxy}'.format(self=self))
+                    'Could not connect to proxy: {}'.format(self.__proxy))
 
             parts = resp.split()
             try:
