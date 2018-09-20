@@ -166,8 +166,8 @@ class ConnectionPool(object):
             resp = sock.recv(4096)
 
             if not resp:
-                raise ProxyError(
-                    'Could not connect to proxy: {}'.format(self.__proxy))
+                raise ProxyError('Could not connect to proxy',
+                                 proxy=self.__proxy)
 
             parts = resp.split()
             try:
