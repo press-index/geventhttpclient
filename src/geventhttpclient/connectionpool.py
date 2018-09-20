@@ -51,8 +51,12 @@ class ProxyError(ConnectionError):
         self.body = body
 
     def __str__(self):
-        return '{}, proxy: {}. status code: {}'.format(
-            self.args[0], self.proxy, self.status_code)
+        message = '{}, proxy: {}'.format(self.args[0], self.proxy)
+
+        if self.status_code is not None:
+            message = '{}, status_code: {}'.format(message, self.status_code)
+
+        return message
 
 
 class ConnectionPool(object):
@@ -168,7 +172,10 @@ class ConnectionPool(object):
                 )
             )
 
-            resp = sock.recv(4096)
+            try:
+                resp = sock.recv(4096)
+            except Exception as e:
+                raise ProxyError(str(e), proxy=self.__proxy)
 
             if not resp:
                 raise ProxyError('Could not connect to proxy',

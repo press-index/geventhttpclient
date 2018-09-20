@@ -20,14 +20,22 @@ def server(handler):
         server.stop()
 
 
-def make_proxy_response(response=None):
+def make_proxy_response(on_connect_response=None, proxy_response=None):
 
     def _handle(sock, addr):
         sock.recv(1024)
-        if response is not None:
-            sock.sendall(response)
+        if on_connect_response is not None:
+            sock.sendall(on_connect_response)
+            if proxy_response:
+                gevent.sleep(1)
+                sock.sendall(proxy_response)
+                sock.close()
 
     return _handle
+
+
+def closed_socket(sock, addr):
+    sock.close()
 
 
 @pytest.fixture()
@@ -63,3 +71,18 @@ class TestRaiseProxyError:
         with server(make_proxy_response(b"HTTP/1.1 qwerty \r\n\r\n")):
             with pytest.raises(ProxyError):
                 connection_pool.get_socket()
+
+    def test_sock_was_closed(self, connection_pool):
+        with server(closed_socket):
+            with pytest.raises(ProxyError):
+                connection_pool.get_socket()
+
+
+class TestConnectionPool:
+    def test_use_proxy(self, connection_pool):
+        with server(
+                make_proxy_response(b"HTTP/1.1 200 \r\n\r\n",
+                                    b"some response"),
+        ):
+            socket = connection_pool.get_socket()
+            assert b"some response" == socket.recv(1024)
