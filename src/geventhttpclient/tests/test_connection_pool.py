@@ -25,7 +25,6 @@ def make_proxy_response(response=None):
     def _handle(sock, addr):
         sock.recv(1024)
         if response is not None:
-            print('send', response)
             sock.sendall(response)
 
     return _handle
