@@ -113,7 +113,7 @@ def test_close_during_chuncked_readline():
     with server(close_during_chuncked_readline):
         client = HTTPClient(*listener)
         response = client.get('/')
-        assert response['transfer-encoding'] == 'chunked'
+        assert response[b'transfer-encoding'] == b'chunked'
         chunks = []
         with pytest.raises(HTTPException):
             data = 'enter_loop'
@@ -139,7 +139,7 @@ def test_timeout_during_chuncked_readline():
     with server(timeout_during_chuncked_readline):
         client = HTTPClient(*listener, network_timeout=0.1)
         response = client.get('/')
-        assert response['transfer-encoding'] == 'chunked'
+        assert response[b'transfer-encoding'] == b'chunked'
         chunks = []
         with pytest.raises(gevent.socket.timeout):
             data = 'enter_loop'
