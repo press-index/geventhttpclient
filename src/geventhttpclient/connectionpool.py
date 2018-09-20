@@ -38,8 +38,13 @@ DEFAULT_NETWORK_TIMEOUT = 5.0
 IGNORED = object()
 
 
-class ProxyError(Exception):
+class ProxyError(ConnectionError):
     def __init__(self, *args, body=None, status_code=None, proxy=None):
+        """
+        :param body str: body from proxy proxy response
+        :param status_code int: status code from proxy response
+        :param proxy str: proxy string as host:port (10.10.40.50:8989)
+        """
         super().__init__(*args)
         self.proxy = proxy
         self.status_code = status_code
