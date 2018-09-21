@@ -38,6 +38,27 @@ DEFAULT_NETWORK_TIMEOUT = 5.0
 IGNORED = object()
 
 
+class ProxyError(ConnectionError):
+    def __init__(self, *args, body=None, status_code=None, proxy=None):
+        """
+        :param body str: body from proxy proxy response
+        :param status_code int: status code from proxy response
+        :param proxy str: proxy string as host:port (10.10.40.50:8989)
+        """
+        super().__init__(*args)
+        self.proxy = proxy
+        self.status_code = status_code
+        self.body = body
+
+    def __str__(self):
+        message = '{}, proxy: {}'.format(self.args[0], self.proxy)
+
+        if self.status_code is not None:
+            message = '{}, status_code: {}'.format(message, self.status_code)
+
+        return message
+
+
 class ConnectionPool(object):
     DEFAULT_CONNECTION_TIMEOUT = 5.0
     DEFAULT_NETWORK_TIMEOUT = 5.0
@@ -59,6 +80,10 @@ class ConnectionPool(object):
         self._semaphore = lock.BoundedSemaphore(size)
         self._socket_queue = gevent.queue.LifoQueue(size)
         self._use_proxy = use_proxy
+
+        if use_proxy:
+            self.__proxy = '{self._connection_host}:{self._connection_port}'\
+                .format(self=self)
 
         self.connection_timeout = connection_timeout
         self.network_timeout = network_timeout
@@ -147,11 +172,29 @@ class ConnectionPool(object):
                 )
             )
 
-            resp = sock.recv(4096)
+            try:
+                resp = sock.recv(4096)
+            except Exception as e:
+                raise ProxyError(str(e), proxy=self.__proxy)
+
+            if not resp:
+                raise ProxyError('Could not connect to proxy',
+                                 proxy=self.__proxy)
+
             parts = resp.split()
-            if not parts or parts[1] != b"200":
-                raise RuntimeError(
-                    "Error response from Proxy server : %s" % resp)
+            try:
+                code = parts[1]
+                if code != b"200":
+                    raise ProxyError(
+                        'Error response from proxy server',
+                        status_code=int(code),
+                        body=resp,
+                        proxy=self.__proxy,
+                    )
+            except (IndexError, ValueError):
+                raise ProxyError('Invalid response from proxy server',
+                                 body=resp,
+                                 proxy=self.__proxy)
 
     def get_socket(self):
         """ get a socket from the pool. This blocks until one is available.
