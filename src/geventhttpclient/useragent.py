@@ -137,6 +137,11 @@ class CompatResponse(object):
         self.headers = self._response._headers_index
 
     @property
+    def final_url(self):
+        if self._request:
+            return self._request.get_full_url()
+
+    @property
     def status(self):
         """ The returned http status
         """
