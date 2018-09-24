@@ -122,7 +122,15 @@ class HTTPResponse(HTTPResponseParser):
             return True # SKIP BODY
         return False
 
-    def _on_header_field(self, string):
+    def __decode_bytes(self, data):
+        try:
+            return data.decode()
+        except UnicodeDecodeError:
+            return data.decode('latin-1')
+
+    def _on_header_field(self, bytes):
+        string = self.__decode_bytes(bytes)
+
         if self._header_state == HEADER_STATE_FIELD:
             self._current_header_field += string
         else:
@@ -132,7 +140,9 @@ class HTTPResponse(HTTPResponseParser):
 
         self._header_state = HEADER_STATE_FIELD
 
-    def _on_header_value(self, string):
+    def _on_header_value(self, bytes):
+        string = self.__decode_bytes(bytes)
+
         if self._header_state == HEADER_STATE_VALUE:
             self._current_header_value += string
         else:
