@@ -58,5 +58,5 @@ def test_msg():
         connection = HTTPConnection(*listener)
         connection.request("GET", "/")
         response = connection.getresponse()
-        assert response.msg[b'Set-Cookie'] == b"foo=bar, baz=bar"
-        assert response.msg[b'Content-Type'] == b"text/plain"
+        assert response.msg['Set-Cookie'] == "foo=bar, baz=bar"
+        assert response.msg['Content-Type'] == "text/plain"

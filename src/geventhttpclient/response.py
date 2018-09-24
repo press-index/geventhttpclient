@@ -86,7 +86,7 @@ class HTTPResponse(HTTPResponseParser):
 
     @property
     def content_length(self):
-        length = self.get(b'content-length', None)
+        length = self.get('content-length', None)
         if length is not None:
             if six.PY3:
                 return int(length)

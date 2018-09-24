@@ -14,7 +14,7 @@ class HTTPLibHeaders(header.Headers):
     def __getitem__(self, key):
         value = super(HTTPLibHeaders, self).__getitem__(key)
         if isinstance(value, (list, tuple)):
-            return b", ".join(value)
+            return ", ".join(value)
         else:
             return value
 
