@@ -70,14 +70,14 @@ def test_parse_small_blocks():
     assert parser.should_keep_alive()
     assert parser.status_code == 301
     assert sorted(parser.items()) == [
-        (b'cache-control', b'public, max-age=2592000'),
-        (b'content-length', b'218'),
-        (b'content-type', b'text/html; charset=UTF-8'),
-        (b'date', b'Thu, 13 Oct 2011 15:03:12 GMT'),
-        (b'expires', b'Sat, 12 Nov 2011 15:03:12 GMT'),
-        (b'location', b'http://www.google.fr/'),
-        (b'server', b'gws'),
-        (b'x-xss-protection', b'1; mode=block'),
+        ('cache-control', 'public, max-age=2592000'),
+        ('content-length', '218'),
+        ('content-type', 'text/html; charset=UTF-8'),
+        ('date', 'Thu, 13 Oct 2011 15:03:12 GMT'),
+        ('expires', 'Sat, 12 Nov 2011 15:03:12 GMT'),
+        ('location', 'http://www.google.fr/'),
+        ('server', 'gws'),
+        ('x-xss-protection', '1; mode=block'),
     ]
 
 @wrap_refcount

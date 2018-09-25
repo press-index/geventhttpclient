@@ -377,11 +377,11 @@ class UserAgent(object):
                 if self.cookiejar is not None:
                     self.cookiejar.extract_cookies(resp, req)
 
-                redirection = resp.headers.get(b'location')
+                redirection = resp.headers.get('location')
                 if resp.status_code in self.redirect_resonse_codes and redirection:
                     try:
                         resp.release()
-                        req.redirect(resp.status_code, six.text_type(redirection, 'utf8'))
+                        req.redirect(resp.status_code, redirection)
                         continue
                     except Exception as e:
                         last_error = self._handle_error(e, url=req.url)
