@@ -153,12 +153,8 @@ class HTTPClient(object):
                 header_fields[HEADER_CONTENT_LENGTH] = body_length
 
         request_url = request_uri
-        if self.use_proxy:
-            base_url = self._base_url_string
-            if request_uri.startswith(SLASH):
-                base_url = base_url[:-1]
-            request_url = base_url + request_url
-        elif not request_url.startswith((SLASH, PROTO_HTTP)):
+
+        if not request_url.startswith((SLASH, PROTO_HTTP)):
             request_url = SLASH + request_url
         elif request_url.startswith(PROTO_HTTP):
             if request_url.startswith(self._base_url_string):
